@@ -2,8 +2,8 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StripeProvider } from '@stripe/stripe-react-native';
-import CheckoutScreen from './src/CheckoutScreen';
-import SuccessScreen from './src/SuccessScreen';
+import CheckoutScreen from './src/components/CheckoutScreen';
+import SuccessScreen from './src/components/SuccessScreen';
 import { STRIPE_KEYS } from './src/config/keys';
 
 const Stack = createStackNavigator();
