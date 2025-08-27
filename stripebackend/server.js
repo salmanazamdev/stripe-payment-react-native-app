@@ -1,6 +1,9 @@
 const express = require('express');
 const stripe = require('stripe')('sk_test_51S0hSmRyizKl6LlzqPo9fJIghSJbocpGtAId2J6TZyVpJDTsGwjiyop4yAK1N5z5xus2KZAqeHSPHDntDVY93L3T00RL0IHUPp'); // Replace with your secret key
 
+const cors = require('cors');
+app.use(cors());
+
 const app = express();
 app.use(express.json());
 

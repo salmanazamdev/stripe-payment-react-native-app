@@ -1,94 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { useStripe } from '@stripe/stripe-react-native';
-import { API_BASE_URL } from './config/keys';
 
-const CheckoutScreen = ({ navigation }: { navigation: any }) => {
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { useStripe } from '@stripe/stripe-react-native';
+
+const API_URL = 'http://192.168.100.15:3000'; // Android emulator
+
+export default function CheckoutScreen() {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [status, setStatus] = useState('Initializing...');
 
-  // Setup payment sheet
-  const setupPaymentSheet = async () => {
+  const fetchPaymentSheetParams = async () => {
     try {
-      // Call your backend
-      const response = await fetch(`${API_BASE_URL}/payment-sheet`, {
+      console.log('🔵 Fetching payment sheet params...');
+      setStatus('Fetching from server...');
+      
+      const response = await fetch(`${API_URL}/payment-sheet`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 2000 }), // $20.00
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      const { paymentIntent, ephemeralKey, customer } = await response.json();
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
 
-      // Initialize payment sheet
+      const data = await response.json();
+      console.log('✅ Got response:', data);
+      setStatus('Server response received');
+      
+      return {
+        paymentIntent: data.paymentIntent,
+        ephemeralKey: data.ephemeralKey,
+        customer: data.customer,
+      };
+    } catch (error) {
+      console.error('❌ Fetch error:', error);
+      setStatus(`Error: ${error.message}`);
+      throw error;
+    }
+  };
+
+  const initializePaymentSheet = async () => {
+    try {
+      setStatus('Getting payment data...');
+      
+      const {
+        paymentIntent,
+        ephemeralKey,
+        customer,
+      } = await fetchPaymentSheetParams();
+
+      console.log('🔵 Initializing payment sheet...');
+      setStatus('Initializing payment sheet...');
+
       const { error } = await initPaymentSheet({
-        merchantDisplayName: 'My Business',
+        merchantDisplayName: "Example, Inc.",
         customerId: customer,
         customerEphemeralKeySecret: ephemeralKey,
         paymentIntentClientSecret: paymentIntent,
         allowsDelayedPaymentMethods: true,
+        defaultBillingDetails: {
+          name: 'Jane Doe',
+        }
       });
-
-      if (!error) {
-        setReady(true);
+      
+      if (error) {
+        console.error('❌ Payment sheet init error:', error);
+        setStatus(`Init error: ${error.message}`);
+        Alert.alert('Payment Sheet Error', error.message);
       } else {
-        Alert.alert('Setup Error', error.message);
+        console.log('✅ Payment sheet initialized successfully');
+        setStatus('Ready to pay!');
+        setLoading(true);
       }
     } catch (error) {
-      Alert.alert('Setup Failed', 'Could not setup payment');
+      console.error('❌ Initialize error:', error);
+      setStatus(`Failed: ${error.message}`);
+      Alert.alert('Initialization Failed', error.message);
     }
   };
 
-  // Handle payment
-  const handlePayment = async () => {
-    setLoading(true);
-
+  const openPaymentSheet = async () => {
+    console.log('🔵 Opening payment sheet...');
     const { error } = await presentPaymentSheet();
 
     if (error) {
-      Alert.alert('Payment Failed', error.message);
+      console.error('❌ Payment error:', error);
+      Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      // Payment successful!
-      navigation.navigate('Success');
+      console.log('✅ Payment successful!');
+      Alert.alert('Success', 'Your order is confirmed!');
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
-    setupPaymentSheet();
+    initializePaymentSheet();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Stripe Payment Test</Text>
-      <Text style={styles.amount}>Amount: $20.00</Text>
-
+      <Text style={styles.title}>Stripe Payment Sheet Demo</Text>
+      <Text style={styles.amount}>Amount: €10.99</Text>
+      
+      {/* Status indicator */}
+      <Text style={styles.status}>Status: {status}</Text>
+      
       <TouchableOpacity
-        style={[styles.button, (!ready || loading) && styles.disabled]}
-        onPress={handlePayment}
-        disabled={!ready || loading}
+        style={[styles.button, !loading && styles.disabled]}
+        disabled={!loading}
+        onPress={openPaymentSheet}
       >
-        {loading ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={styles.buttonText}>
-            {ready ? 'Pay Now' : 'Setting up...'}
-          </Text>
-        )}
+        <Text style={styles.buttonText}>
+          {loading ? 'Checkout' : 'Loading...'}
+        </Text>
       </TouchableOpacity>
 
-      <View style={styles.testInfo}>
+      {/* Debug button to retry */}
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={initializePaymentSheet}
+      >
+        <Text style={styles.retryButtonText}>Retry Setup</Text>
+      </TouchableOpacity>
+
+      <View style={styles.testCard}>
         <Text style={styles.testTitle}>Test Card:</Text>
         <Text>4242 4242 4242 4242</Text>
-        <Text>Any future date, any CVC</Text>
+        <Text>Any future expiry, any CVC</Text>
       </View>
     </View>
   );
@@ -97,28 +138,34 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
     backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
     marginBottom: 20,
+    textAlign: 'center',
   },
   amount: {
     fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
     color: '#333',
+  },
+  status: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: '#666',
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#5469d4',
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   disabled: {
     backgroundColor: '#ccc',
@@ -127,17 +174,28 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
-  testInfo: {
+  retryButton: {
+    backgroundColor: '#ff6b6b',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  testCard: {
     backgroundColor: 'white',
-    padding: 16,
+    padding: 20,
     borderRadius: 8,
     alignItems: 'center',
   },
   testTitle: {
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 10,
   },
 });
-
-export default CheckoutScreen;

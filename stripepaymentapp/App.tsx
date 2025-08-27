@@ -1,24 +1,29 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import React, { useState, useEffect } from 'react';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import CheckoutScreen from './src/components/CheckoutScreen';
-import SuccessScreen from './src/components/SuccessScreen';
-import { STRIPE_KEYS } from './src/config/keys';
 
-const Stack = createStackNavigator();
+function App(): JSX.Element {
+  const [publishableKey, setPublishableKey] = useState('');
 
-const App = (): JSX.Element => {
+  const fetchPublishableKey = async () => {
+    // In production, fetch this from your server
+    // For now, use your actual publishable key
+    setPublishableKey('pk_test_51S0hSmRyizKl6LlzkFz6qjKQEi0xCA6TjBUjQioFdxdqqu2PBWCgpqf63sDjmKyyU4h0uvkcF2qbWDdCN9M1mk2C003SvOSe45');
+  };
+
+  useEffect(() => {
+    fetchPublishableKey();
+  }, []);
+
   return (
-    <StripeProvider publishableKey={STRIPE_KEYS.publishableKey}>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name="Checkout" component={CheckoutScreen} />
-          <Stack.Screen name="Success" component={SuccessScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+    <StripeProvider 
+      publishableKey={publishableKey}
+      merchantIdentifier="merchant.identifier" // required for Apple Pay
+      urlScheme="your-url-scheme" // required for 3D Secure and bank redirects
+    >
+      <CheckoutScreen />
     </StripeProvider>
   );
-};
+}
 
 export default App;
