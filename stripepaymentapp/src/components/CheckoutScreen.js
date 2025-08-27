@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
-import { API_BASE_URL } from '../config/stripe';
+import { API_BASE_URL } from '../config/keys';
 
 const CheckoutScreen = ({ navigation }) => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
