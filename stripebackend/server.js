@@ -1,5 +1,5 @@
 const express = require('express');
-const stripe = require('stripe')('sk_test_YOUR_SECRET_KEY_HERE'); // Replace with your secret key
+const stripe = require('stripe')('STRIPE_SECRET_KEY');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -40,7 +40,7 @@ app.post('/payment-sheet', async (req, res) => {
       paymentIntent: paymentIntent.client_secret,
       ephemeralKey: ephemeralKey.secret,
       customer: customer.id,
-      publishableKey: 'pk_test_YOUR_PUBLISHABLE_KEY_HERE' // Replace with your publishable key
+      publishableKey: 'STRIPE_PUBLISHABLE_KEY'
     });
 
   } catch (error) {
