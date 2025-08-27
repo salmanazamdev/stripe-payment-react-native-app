@@ -8,7 +8,7 @@ import { STRIPE_KEYS } from './src/config/keys';
 
 const Stack = createStackNavigator();
 
-export default function App() {
+const App = (): JSX.Element => {
   return (
     <StripeProvider publishableKey={STRIPE_KEYS.publishableKey}>
       <NavigationContainer>
@@ -19,4 +19,6 @@ export default function App() {
       </NavigationContainer>
     </StripeProvider>
   );
-}
+};
+
+export default App;
