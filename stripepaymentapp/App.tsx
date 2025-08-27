@@ -1,45 +1,52 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import CheckoutScreen from './src/components/CheckoutScreen';
+import SuccessScreen from './src/components/SuccessScreen';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+const Stack = createStackNavigator();
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+const App = () => {
+  const [publishableKey, setPublishableKey] = useState('');
+
+  // Fetch publishable key from your server
+  const fetchPublishableKey = async () => {
+    // In production, fetch this from your server
+    // For now, we'll use the hardcoded key
+    setPublishableKey('pk_test_YOUR_PUBLISHABLE_KEY_HERE');
+  };
+
+  useEffect(() => {
+    fetchPublishableKey();
+  }, []);
+
+  if (!publishableKey) {
+    return null; // Loading state
+  }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <StripeProvider
+      publishableKey={publishableKey}
+      merchantIdentifier="merchant.com.stripepaymentapp"
+      urlScheme="stripepaymentapp"
+    >
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Checkout">
+          <Stack.Screen 
+            name="Checkout" 
+            component={CheckoutScreen}
+            options={{ title: 'Checkout' }}
+          />
+          <Stack.Screen 
+            name="Success" 
+            component={SuccessScreen}
+            options={{ title: 'Payment Success', headerLeft: null }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </StripeProvider>
   );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+};
 
 export default App;
