@@ -1,50 +1,36 @@
 const express = require('express');
-const stripe = require('stripe')('STRIPE_SECRET_KEY'); 
-const cors = require('cors');
+const stripe = require('stripe')('sk_test_51S0hSmRyizKl6LlzqPo9fJIghSJbocpGtAId2J6TZyVpJDTsGwjiyop4yAK1N5z5xus2KZAqeHSPHDntDVY93L3T00RL0IHUPp'); // Replace with your secret key
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
+// Exact endpoint from Stripe docs
 app.post('/payment-sheet', async (req, res) => {
-  try {
-    const { amount = 2000 } = req.body; // $20.00 default
+  // Use an existing Customer ID if this is a returning customer.
+  const customer = await stripe.customers.create();
+  const ephemeralKey = await stripe.ephemeralKeys.create(
+    {customer: customer.id},
+    {apiVersion: '2025-07-30.basil'}
+  );
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: 1099,
+    currency: 'eur',
+    customer: customer.id,
+    // In the latest version of the API, specifying the `automatic_payment_methods` parameter
+    // is optional because Stripe enables its functionality by default.
+    automatic_payment_methods: {
+      enabled: true,
+    },
+  });
 
-    const customer = await stripe.customers.create();
-
-    const ephemeralKey = await stripe.ephemeralKeys.create(
-      { customer: customer.id },
-      { apiVersion: '2025-07-30.basil' }
-    );
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: 'usd',
-      customer: customer.id,
-      automatic_payment_methods: { enabled: true },
-    });
-
-    res.json({
-      paymentIntent: paymentIntent.client_secret,
-      ephemeralKey: ephemeralKey.secret,
-      customer: customer.id,
-    });
-
-  } catch (error) {
-    res.status(400).json({ error: { message: error.message } });
-  }
+  res.json({
+    paymentIntent: paymentIntent.client_secret,
+    ephemeralKey: ephemeralKey.secret,
+    customer: customer.id,
+    publishableKey: 'pk_test_51S0hSmRyizKl6LlzkFz6qjKQEi0xCA6TjBUjQioFdxdqqu2PBWCgpqf63sDjmKyyU4h0uvkcF2qbWDdCN9M1mk2C003SvOSe45'
+  });
 });
 
-app.get('/payment-status/:paymentIntentId', async (req, res) => {
-  try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(req.params.paymentIntentId);
-    res.json({ status: paymentIntent.status });
-  } catch (error) {
-    res.status(400).json({ error: { message: error.message } });
-  }
-});
-
-console.log('🚀 Server starting on port 3000...');
 app.listen(3000, () => {
-  console.log('✅ Server running! Test it at http://localhost:3000');
+  console.log('Server running on port 3000');
 });
