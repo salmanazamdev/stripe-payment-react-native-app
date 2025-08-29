@@ -1,5 +1,5 @@
 const express = require('express');
-const stripe = require('stripe')('sk_test_51S0hSmRyizKl6LlzqPo9fJIghSJbocpGtAId2J6TZyVpJDTsGwjiyop4yAK1N5z5xus2KZAqeHSPHDntDVY93L3T00RL0IHUPp'); // Replace with your secret key
+const stripe = require('stripe')('STRIPE_SECRET_KEY'); // Replace with your secret key
 
 const cors = require('cors');
 app.use(cors());
@@ -30,7 +30,7 @@ app.post('/payment-sheet', async (req, res) => {
     paymentIntent: paymentIntent.client_secret,
     ephemeralKey: ephemeralKey.secret,
     customer: customer.id,
-    publishableKey: 'pk_test_51S0hSmRyizKl6LlzkFz6qjKQEi0xCA6TjBUjQioFdxdqqu2PBWCgpqf63sDjmKyyU4h0uvkcF2qbWDdCN9M1mk2C003SvOSe45'
+    publishableKey: 'STRIPE_PUBLISHABLE_KEY'
   });
 });
 
