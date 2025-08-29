@@ -1,6 +1,4 @@
-# GitHub Repository README
-
-## 💳 Stripe Payment Sheet - React Native App
+# 💳 Stripe Payment Sheet - React Native App
 
 A complete, production-ready React Native application demonstrating Stripe Payment Sheet integration with TypeScript, featuring secure payment processing, beautiful UI, and comprehensive error handling.
 
